@@ -2,14 +2,18 @@ package observatory
 
 import java.time.LocalDate
 
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{Dataset, SparkSession, types}
 
 /**
   * 1st milestone: data extraction
   */
 object Extraction {
 
-  case class StationRecord(stn: Int, wban: Option[Int], latitude: Option[Double], longitude: Option[Double])
+  case class StationRecord(stn: Int, wban: Option[Int], latitude: Double, longitude: Double) {
+    def location = {
+      Location(latitude, longitude)
+    }
+  }
 
   case class TemperatureRecord(stn: Int, wban: Option[Int], month: Int, day: Int, temperature: Temperature)
 
@@ -26,25 +30,33 @@ object Extraction {
     */
   def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Temperature)] = {
     val stationsFilePath = this.getClass.getResource(stationsFile).toURI.toString
-    val stations: Dataset[StationRecord] = spark.read.option("inferSchema", true).csv(stationsFilePath).as[StationRecord]
+    val stationColumns = List("stn", "wban", "latitude", "longitude")
+    val stations = spark.read.option("inferSchema", true).
+      schema(types.StructType(Seq(
+        types.StructField("stn", types.IntegerType, false),
+        types.StructField("wban", types.IntegerType, true),
+        types.StructField("latitude", types.DoubleType, true),
+        types.StructField("longitude", types.DoubleType, true)))).
+    csv(stationsFilePath).toDF(stationColumns: _*).
+      na.drop(Seq("latitude", "longitude")).
+      as[StationRecord]
+    val temperatureColumns = List("stn", "wban", "month", "day", "temperature")
     val temperaturesFilePath = this.getClass.getResource(temperaturesFile).toURI.toString
-    val temperatures: Dataset[TemperatureRecord] = spark.read.option("inferSchema", true).csv(temperaturesFilePath).as[TemperatureRecord]
+    val temperatures = spark.read.option("inferSchema", true).csv(temperaturesFilePath).toDF(temperatureColumns: _*).as[TemperatureRecord]
     locateTemperaturesFromRecords(stations, temperatures).collect.map { case(month, day, location, temperature) =>
       (LocalDate.of(year, month, day), location, temperature)
     }
   }
 
 
-  def locateTemperaturesFromRecords(allStations: Dataset[StationRecord], allTemperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
-    val stations = allStations.where(s"latitude is not null or longitude is not null")
+  def locateTemperaturesFromRecords(stations: Dataset[StationRecord], allTemperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
     val temperatures = allTemperatures.where(s"temperature != $missingTemperatureMarker")
     val joined: Dataset[(StationRecord, TemperatureRecord)] = stations.joinWith(temperatures, stations("stn") === temperatures("stn"))
     joined.map { (record: (StationRecord, TemperatureRecord)) =>
       val stationRecord = record._1
       val temperatureRecord = record._2
-      val location = Location(stationRecord.latitude.get, stationRecord.longitude.get)
       val temperature = temperatureRecord.temperature
-      (temperatureRecord.month, temperatureRecord.day, location, temperature)
+      (temperatureRecord.month, temperatureRecord.day, stationRecord.location, temperature)
     }
   }
 

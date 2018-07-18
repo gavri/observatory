@@ -37,10 +37,10 @@ trait ExtractionTest extends FunSuite {
     import spark.implicits._
 
     val actual = Extraction.locateTemperaturesFromRecords(
-      List(Extraction.StationRecord(1, Some(2), Some(5), Some(7))).toDS,
+      List(Extraction.StationRecord(1, None, 5, 7)).toDS,
       List(
-        Extraction.TemperatureRecord(1, Some(2), 1, 2, 5.0),
-        Extraction.TemperatureRecord(1, Some(2), 1, 2, 3.0)
+        Extraction.TemperatureRecord(1, None, 1, 2, 5.0),
+        Extraction.TemperatureRecord(1, None, 1, 2, 3.0)
       ).toDS
     )
 
@@ -52,14 +52,17 @@ trait ExtractionTest extends FunSuite {
     import spark.implicits._
 
     val actual = Extraction.locateTemperaturesFromRecords(
-      List(Extraction.StationRecord(1, Some(2), Some(5), Some(7))).toDS,
+      List(Extraction.StationRecord(1, None, 5, 7)).toDS,
       List(
-        Extraction.TemperatureRecord(1, Some(2), 1, 2, 5.0),
-        Extraction.TemperatureRecord(1, Some(2), 1, 2, 9999.9)
+        Extraction.TemperatureRecord(1, None, 1, 2, 5.0),
+        Extraction.TemperatureRecord(1, None, 1, 2, 9999.9)
       ).toDS
     )
 
     assert(actual.collect.deep == Array((1, 2, Location(5.0, 7.0), 5.0)).deep)
+  }
 
+  test("integration") {
+    assert(Extraction.locateTemperatures(1975, "/stations.csv", "/1975.csv") != null)
   }
 }
