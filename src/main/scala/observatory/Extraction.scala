@@ -18,6 +18,8 @@ object Extraction {
   val spark = SparkSession.builder.appName("observatory").master("local").getOrCreate()
   import spark.implicits._
 
+  val missingTemperatureMarker = 9999.9
+
   /**
     * @param year             Year number
     * @param stationsFile     Path of the stations resource file to use (e.g. "/stations.csv")
@@ -35,7 +37,8 @@ object Extraction {
   }
 
 
-  def locateTemperaturesFromRecords(stations: Dataset[StationRecord], temperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
+  def locateTemperaturesFromRecords(stations: Dataset[StationRecord], allTemperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
+    val temperatures = allTemperatures.where(s"temperature != $missingTemperatureMarker")
     val joined: Dataset[(StationRecord, TemperatureRecord)] = stations.joinWith(temperatures, stations("stn") === temperatures("stn"))
     joined.map { (record: (StationRecord, TemperatureRecord)) =>
       val stationRecord = record._1
