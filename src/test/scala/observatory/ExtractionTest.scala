@@ -37,7 +37,7 @@ trait ExtractionTest extends FunSuite {
     import spark.implicits._
 
     val actual = Extraction.locateTemperaturesFromRecords(
-      List(Extraction.StationRecord(1, Some(2), 5, 7)).toDS,
+      List(Extraction.StationRecord(1, Some(2), Some(5), Some(7))).toDS,
       List(
         Extraction.TemperatureRecord(1, Some(2), 1, 2, 5.0),
         Extraction.TemperatureRecord(1, Some(2), 1, 2, 3.0)
@@ -52,7 +52,7 @@ trait ExtractionTest extends FunSuite {
     import spark.implicits._
 
     val actual = Extraction.locateTemperaturesFromRecords(
-      List(Extraction.StationRecord(1, Some(2), 5, 7)).toDS,
+      List(Extraction.StationRecord(1, Some(2), Some(5), Some(7))).toDS,
       List(
         Extraction.TemperatureRecord(1, Some(2), 1, 2, 5.0),
         Extraction.TemperatureRecord(1, Some(2), 1, 2, 9999.9)

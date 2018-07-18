@@ -9,9 +9,7 @@ import org.apache.spark.sql.{Dataset, SparkSession}
   */
 object Extraction {
 
-  case class StationRecord(stn: Int, wban: Option[Int], latitude: Double, longitude: Double) {
-    def location: Location = Location(latitude, longitude)
-  }
+  case class StationRecord(stn: Int, wban: Option[Int], latitude: Option[Double], longitude: Option[Double])
 
   case class TemperatureRecord(stn: Int, wban: Option[Int], month: Int, day: Int, temperature: Temperature)
 
@@ -37,13 +35,14 @@ object Extraction {
   }
 
 
-  def locateTemperaturesFromRecords(stations: Dataset[StationRecord], allTemperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
+  def locateTemperaturesFromRecords(allStations: Dataset[StationRecord], allTemperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
+    val stations = allStations.where(s"latitude is not null or longitude is not null")
     val temperatures = allTemperatures.where(s"temperature != $missingTemperatureMarker")
     val joined: Dataset[(StationRecord, TemperatureRecord)] = stations.joinWith(temperatures, stations("stn") === temperatures("stn"))
     joined.map { (record: (StationRecord, TemperatureRecord)) =>
       val stationRecord = record._1
       val temperatureRecord = record._2
-      val location = stationRecord.location
+      val location = Location(stationRecord.latitude.get, stationRecord.longitude.get)
       val temperature = temperatureRecord.temperature
       (temperatureRecord.month, temperatureRecord.day, location, temperature)
     }
