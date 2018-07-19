@@ -98,4 +98,9 @@ trait ExtractionTest extends FunSuite {
   test("integration") {
     assert(Extraction.locateTemperatures(1975, "/stations.csv", "/1975.csv") != null)
   }
+
+  test("temperature in celsius") {
+    val record = TemperatureRecord(1, None, 1, 2, 50.0)
+    assert(10.0 == record.temperatureInCelsius)
+  }
 }

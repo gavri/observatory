@@ -15,7 +15,9 @@ object Extraction {
     }
   }
 
-  case class TemperatureRecord(stn: Int, wban: Option[Int], month: Int, day: Int, temperature: Temperature)
+  case class TemperatureRecord(stn: Int, wban: Option[Int], month: Int, day: Int, temperature: Temperature) {
+    def temperatureInCelsius: Temperature = (temperature - 32) * (5.0 / 9.0)
+  }
 
   val spark = SparkSession.builder.appName("observatory").master("local").getOrCreate()
   import spark.implicits._
@@ -42,7 +44,10 @@ object Extraction {
       as[StationRecord]
     val temperatureColumns = List("stn", "wban", "month", "day", "temperature")
     val temperaturesFilePath = this.getClass.getResource(temperaturesFile).toURI.toString
-    val temperatures = spark.read.option("inferSchema", true).csv(temperaturesFilePath).toDF(temperatureColumns: _*).as[TemperatureRecord]
+    val temperaturesInFahrenheit = spark.read.option("inferSchema", true).csv(temperaturesFilePath).toDF(temperatureColumns: _*).
+      na.drop(Seq("stn")).
+      as[TemperatureRecord]
+    val temperatures = temperaturesInFahrenheit.map(r => TemperatureRecord(r.stn, r.wban, r.month, r.day, r.temperatureInCelsius))
     locateTemperaturesFromRecords(stations, temperatures).collect.map { case(month, day, location, temperature) =>
       (LocalDate.of(year, month, day), location, temperature)
     }
