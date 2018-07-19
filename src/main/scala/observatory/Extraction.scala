@@ -51,7 +51,9 @@ object Extraction {
 
   def locateTemperaturesFromRecords(stations: Dataset[StationRecord], allTemperatures: Dataset[TemperatureRecord]): Dataset[(Int, Int, Location, Temperature)] = {
     val temperatures = allTemperatures.where(s"temperature != $missingTemperatureMarker")
-    val joined: Dataset[(StationRecord, TemperatureRecord)] = stations.joinWith(temperatures, stations("stn") === temperatures("stn"))
+    val stnEquality = stations("stn") === temperatures("stn")
+    val wbanEquality = stations("wban") <=> temperatures("wban")
+    val joined: Dataset[(StationRecord, TemperatureRecord)] = stations.joinWith(temperatures, stnEquality && wbanEquality)
     joined.map { (record: (StationRecord, TemperatureRecord)) =>
       val stationRecord = record._1
       val temperatureRecord = record._2
