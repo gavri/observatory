@@ -5,7 +5,41 @@ package observatory
   * @param lat Degrees of latitude, -90 ≤ lat ≤ 90
   * @param lon Degrees of longitude, -180 ≤ lon ≤ 180
   */
-case class Location(lat: Double, lon: Double)
+case class Location(latitude: Double, longitude: Double) {
+
+  val EARTH_RADIUS = 6378100
+
+  def distance(other: Location): Double = EARTH_RADIUS * {
+    if (this == other) {
+      0.0
+    }
+    else if (this.isAntipodeOf(other)) {
+      Math.PI
+    }
+    else {
+      val thisLatitudeInRadians = Math.toRadians(latitude)
+      val thisLongitudeInRadians = Math.toRadians(longitude)
+      val otherLatitudeInRadians = Math.toRadians(other.latitude)
+      val otherLongitudeInRadians = Math.toRadians(other.longitude)
+      val latitudeSineComponent = Math.sin(thisLatitudeInRadians) * Math.sin(otherLatitudeInRadians)
+      val latitudeCosComponent = Math.cos(thisLatitudeInRadians) * Math.cos(otherLatitudeInRadians)
+      val longitudeCosComponent = Math.cos(Math.abs(thisLongitudeInRadians - otherLongitudeInRadians))
+      Math.acos(latitudeSineComponent + latitudeCosComponent * longitudeCosComponent)
+    }
+  }
+
+  private def antipode: Location = {
+    val antipodeLatitude = - latitude
+    val signOfLongitude = longitude / longitude.abs
+    val signOfAntipodeLongitude = - signOfLongitude
+    val antipodeLongitude = signOfAntipodeLongitude * (180 - longitude.abs)
+    Location(antipodeLatitude, antipodeLongitude)
+  }
+
+  private def isAntipodeOf(other: Location): Boolean = {
+    other == antipode
+  }
+}
 
 /**
   * Introduced in Week 3. Represents a tiled web map tile.
