@@ -13,8 +13,12 @@ trait ExtractionTest extends FunSuite {
   }
 
   test("location average records") {
-    val records = List((LocalDate.of(2010, 1, 2), Location(1.0, 2.0), 5.0), (LocalDate.of(2010, 3, 4), Location(1.0, 2.0), 10.0),
-      (LocalDate.of(2010, 2, 3), Location(10.0, 15.0), 7.0), (LocalDate.of(2010, 5, 6), Location(10.0, 15.0), 9.0))
+    val records = List(
+      (LocalDate.of(2010, 1, 2), Location(1.0, 2.0), 5.0),
+      (LocalDate.of(2010, 3, 4), Location(1.0, 2.0), 10.0),
+      (LocalDate.of(2010, 2, 3), Location(10.0, 15.0), 7.0),
+      (LocalDate.of(2010, 5, 6), Location(10.0, 15.0), 9.0)
+    )
     val actual = Extraction.locationYearlyAverageRecords(records)
     val expected = List((Location(1.0, 2.0), 7.5), (Location(10.0, 15.0), 8.0))
     assert(expected.toSet == actual.toSet)

@@ -58,12 +58,9 @@ object Extraction {
     val temperatures = allTemperatures.where(s"temperature != $missingTemperatureMarker")
     val stnEquality = stations("stn") === temperatures("stn")
     val wbanEquality = stations("wban") <=> temperatures("wban")
-    val joined: Dataset[(StationRecord, TemperatureRecord)] = stations.joinWith(temperatures, stnEquality && wbanEquality)
-    joined.map { (record: (StationRecord, TemperatureRecord)) =>
-      val stationRecord = record._1
-      val temperatureRecord = record._2
-      val temperature = temperatureRecord.temperature
-      (temperatureRecord.month, temperatureRecord.day, stationRecord.location, temperature)
+    val joined = stations.joinWith(temperatures, stnEquality && wbanEquality)
+    joined.map { case (stationRecord, temperatureRecord) =>
+      (temperatureRecord.month, temperatureRecord.day, stationRecord.location, temperatureRecord.temperature)
     }
   }
 
