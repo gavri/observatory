@@ -28,6 +28,18 @@ case class Location(latitude: Double, longitude: Double) {
     }
   }
 
+  val PROXIMITY_FACTOR = 2
+
+  def proximity(other: Location): Double = {
+    (1 / Math.pow(distance(other), PROXIMITY_FACTOR))
+  }
+
+  val DISTANCE_RESOLUTION = 1000
+
+  def isNeighborOf(other: Location): Boolean = {
+    distance(other) < DISTANCE_RESOLUTION
+  }
+
   private def antipode: Location = {
     val antipodeLatitude = - latitude
     val signOfLongitude = longitude / longitude.abs

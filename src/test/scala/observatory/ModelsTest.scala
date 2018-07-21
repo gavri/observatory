@@ -27,4 +27,25 @@ trait ModelsTest extends FunSuite with Checkers {
     val london = Location(51.5074, 0.1278)
     assert(newYork.distance(london) === distanceFromNewYorkToLondon)
   }
+
+  test("weight of distance between points") {
+    implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(0.000000000000000001)
+    val proximityFromNewYorkToLondon = 0.00000000000003215788852880352
+    val newYork = Location(40.7128, 74.0060)
+    val london = Location(51.5074, 0.1278)
+    assert(newYork.proximity(london) === proximityFromNewYorkToLondon)
+  }
+
+  test("locations are not neighbors") {
+    val newYork = Location(40.7128, 74.0060)
+    val london = Location(51.5074, 0.1278)
+    assert(!newYork.isNeighborOf(london))
+  }
+
+  test("locations are neighbors") {
+    val aStarbucks = Location(40.748293, -73.989311)
+    val anotherStarbucks = Location(40.749358, -73.983711)
+    assert(aStarbucks.isNeighborOf(anotherStarbucks))
+  }
+
 }
