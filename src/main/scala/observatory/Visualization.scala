@@ -13,7 +13,18 @@ object Visualization {
     * @return The predicted temperature at `location`
     */
   def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
-    ???
+    val neighborTemperature = temperatures.find { case (otherLocation, temperature) =>
+      location.isNeighborOf(otherLocation)
+    }.map(_._2)
+    neighborTemperature getOrElse {
+      val proximitesWithTemperatures = temperatures.map { case (otherLocation, temperature) =>
+        val proximity = location.proximity(otherLocation)
+        (proximity, temperature)
+      }
+      val numerator = proximitesWithTemperatures.map(v => v._1 * v._2).sum
+      val denominator = proximitesWithTemperatures.map(_._1).sum
+      numerator / denominator
+    }
   }
 
   /**
